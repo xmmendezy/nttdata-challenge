@@ -1,0 +1,44 @@
+name: Deploy App
+
+on:
+    push:
+        branches:
+            - '*'
+
+env:
+    ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
+    IMAGE_NAME: ${{ secrets.IMAGE_NAME }}
+    AWS_REGION: sa-east-1
+    AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+    AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    AWS_CLUSTER_KUBERNETES: ${{ secrets.AWS_CLUSTER_KUBERNETES }}
+    AWS_ARN_KUBERNETES: ${{ secrets.AWS_ARN_KUBERNETES }}
+    REDIS_HOST: ${{ secrets.REDIS_HOST }}
+    REDIS_PORT: ${{ secrets.REDIS_PORT }}
+    JWT: ${{ secrets.JWT }}
+    API_KEY: ${{ secrets.API_KEY }}
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+        steps:
+            -   name: Checkout repository
+                uses: actions/checkout@v2
+
+            -   name: Configure AWS credentials
+                uses: aws-actions/configure-aws-credentials@v1
+
+            -   name: Install and configure kubectl
+                run: |
+                    VERSION=$(curl --silent https://storage.googleapis.com/kubernetes-release/release/stable.txt)
+                    # https://github.com/aws/aws-cli/issues/6920#issuecomment-1117981158
+                    VERSION=v1.23.6
+                    curl https://storage.googleapis.com/kubernetes-release/release/$VERSION/bin/linux/amd64/kubectl \
+                      --progress-bar \
+                      --location \
+                      --remote-name
+                    chmod +x kubectl
+                    sudo mv kubectl /usr/local/bin/
+                    aws eks update-kubeconfig --name ${{ env.AWS_CLUSTER_KUBERNETES }} --region ${{ env.AWS_REGION }} --role-arn ${{ env.AWS_ARN_KUBERNETES }}
+            -   name: Deploy
+                run: kubectl apply -f kubernetes

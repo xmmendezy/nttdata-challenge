@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: nttdata-app
+    labels:
+        app: nttdata-app
+spec:
+    replicas: 2
+    selector:
+        matchLabels:
+            app: nttdata-app
+    template:
+        metadata:
+            labels:
+                app: nttdata-app
+        spec:
+            containers:
+                - name: nttdata-app
+                  image: $(DOCKER_REPO_NAME)
+                  ports:
+                      - containerPort: 3000
+                  envFrom:
+                      - secretRef:
+                          name: nttdata-app-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+    name: nttdata-app-service
+    labels:
+        app: nttdata-app
+spec:
+    type: LoadBalancer
+    ports:
+        - port: 80
+          targetPort: 3000
+          protocol: TCP
+    selector:
+        app: nttdata-app

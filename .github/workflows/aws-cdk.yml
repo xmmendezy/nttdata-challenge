@@ -1,4 +1,4 @@
-name: CDK Deploy
+name: AWS CDK Deploy
 
 on:
     push:
@@ -9,15 +9,20 @@ jobs:
     deploy:
         runs-on: ubuntu-latest
         steps:
+            - name: Checkout repository
+              uses: actions/checkout@v2
+
             - name: Prepare
-              uses: aws-actions/setup-aws-cli@v1
+              uses: actions/setup-node@v3
               with:
                   node-version: 18
                   cache: 'npm'
+
             - name: Install dependencies
               run: |
                   cd aws
                   npm ci
+
             - name: Deploy AWS CDK stack
               run: |
                   cd aws

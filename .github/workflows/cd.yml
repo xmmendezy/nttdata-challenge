@@ -133,7 +133,7 @@ jobs:
                 id: push-image-latest
                 if: github.ref == 'refs/heads/master'
                 run: |
-                    docker push $ECR_REGISTRY/$IMAGE_NAME:latest
+                    docker push $ECR_REGISTRY/$IMAGE_NAME
 
             -   name: Write image details to file
                 run: |

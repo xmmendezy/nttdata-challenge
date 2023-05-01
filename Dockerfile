@@ -5,7 +5,7 @@ WORKDIR /usr/src/app
 COPY --chown=node:node package.json ./
 COPY --chown=node:node pnpm-lock.yaml ./
 RUN npm install --global pnpm
-RUN pnpm install --prod
+RUN pnpm install
 COPY --chown=node:node . .
 USER node
 
@@ -27,5 +27,7 @@ WORKDIR /usr/src/app
 
 COPY --chown=node:node --from=build /usr/src/app/node_modules ./node_modules
 COPY --chown=node:node --from=build /usr/src/app/dist .
+
+RUN pnpm install --prod --force
 
 CMD [ "node", "main" ]

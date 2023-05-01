@@ -3,7 +3,7 @@ name: Build and Push Docker Image
 on:
     push:
         branches:
-            - master
+            - '*'
 
 env:
     ECR_REGISTRY: 092746443745.dkr.ecr.sa-east-1.amazonaws.com/cdk-hnb659fds-container-assets-092746443745-sa-east-1
@@ -29,13 +29,13 @@ jobs:
             - name: Build Docker image
               id: build-image
               run: |
-                  docker build -t $ECR_REGISTRY/$IMAGE_NAME:$GITHUB_SHA .
+                  docker build --target production -t $ECR_REGISTRY/$IMAGE_NAME:${{ github.ref }} .
 
             - name: Push Docker image to ECR
               id: push-image
               run: |
-                  docker push $ECR_REGISTRY/$IMAGE_NAME:$GITHUB_SHA
+                  docker push $ECR_REGISTRY/$IMAGE_NAME:${{ github.ref }}
 
             - name: Write image details to file
               run: |
-                  echo "::set-output name=image-uri::$ECR_REGISTRY/$IMAGE_NAME:$GITHUB_SHA"
+                  echo "::set-output name=image-uri::$ECR_REGISTRY/$IMAGE_NAME:${{ github.ref }}"

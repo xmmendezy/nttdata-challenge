@@ -8,7 +8,7 @@ export class AwsStack extends cdk.Stack {
 		super(scope, id, props);
 
 		new eks.Cluster(this, 'nttdata-cluster', {
-			version: eks.KubernetesVersion.V1_26,
+			version: eks.KubernetesVersion.V1_22,
 		});
 
 		new ecr.Repository(this, 'nttdata-repository', {

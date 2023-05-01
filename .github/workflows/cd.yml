@@ -59,6 +59,7 @@ jobs:
             -   name: Run tests
                 run: npm run test
     cdk:
+        name: AWS CDK
         needs: test
         runs-on: ubuntu-latest
         steps:
@@ -105,6 +106,7 @@ jobs:
                     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                     AWS_REGION: sa-east-1
     build:
+        name: Build and push docker image
         needs: cdk
         runs-on: ubuntu-latest
         steps:
@@ -132,6 +134,7 @@ jobs:
                 run: |
                     echo "::set-output name=image-uri::$ECR_REGISTRY/$IMAGE_NAME:$GITHUB_SHA"
     deploy:
+        name: Deploy app
         needs: build
         runs-on: ubuntu-latest
         steps:
@@ -140,6 +143,8 @@ jobs:
 
             -   name: Configure AWS credentials
                 uses: aws-actions/configure-aws-credentials@v1
+                with:
+                    aws-region: ${{ env.AWS_REGION }}
 
             -   name: Install and configure kubectl
                 run: |

@@ -28,6 +28,7 @@ WORKDIR /usr/src/app
 COPY --chown=node:node --from=build /usr/src/app/node_modules ./node_modules
 COPY --chown=node:node --from=build /usr/src/app/dist .
 
+RUN npm install --global pnpm
 RUN pnpm install --prod --force
 
 CMD [ "node", "main" ]

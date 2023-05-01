@@ -1,4 +1,4 @@
-name: Deploy App
+name: Pipeline on push
 
 on:
     push:
@@ -8,6 +8,7 @@ on:
 env:
     ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
     IMAGE_NAME: ${{ secrets.IMAGE_NAME }}
+    DOCKER_REPO_NAME: ${{ format('{0}/{1}', secrets.ECR_REGISTRY, secrets.IMAGE_NAME) }}
     AWS_REGION: sa-east-1
     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -19,7 +20,119 @@ env:
     API_KEY: ${{ secrets.API_KEY }}
 
 jobs:
+    test:
+        name: Run tests
+        runs-on: ubuntu-latest
+        steps:
+            -   name: Check out the repository
+                uses: actions/checkout@v3
+
+            -   name: Prepare
+                uses: actions/setup-node@v3
+                with:
+                    node-version: 18
+
+            -   uses: pnpm/action-setup@v2
+                name: Install pnpm
+                id: pnpm-install
+                with:
+                    version: 8
+                    run_install: false
+
+            -   name: Get pnpm store directory
+                id: pnpm-cache
+                shell: bash
+                run: |
+                    echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+            -   uses: actions/cache@v3
+                name: Setup pnpm cache
+                with:
+                    path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+                    key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+                    restore-keys: |
+                        ${{ runner.os }}-pnpm-store-
+
+            -   name: Install dependencies
+                run: pnpm install
+
+            -   name: Run tests
+                run: npm run test
+    cdk:
+        needs: test
+        runs-on: ubuntu-latest
+        steps:
+            -   name: Checkout repository
+                uses: actions/checkout@v2
+
+            -   name: Prepare
+                uses: actions/setup-node@v3
+                with:
+                    node-version: 18
+
+            -   uses: pnpm/action-setup@v2
+                name: Install pnpm
+                id: pnpm-install
+                with:
+                    version: 8
+                    run_install: false
+
+            -   name: Get pnpm store directory
+                id: pnpm-cache
+                shell: bash
+                run: |
+                    echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+            -   uses: actions/cache@v3
+                name: Setup pnpm cache
+                with:
+                    path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+                    key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+                    restore-keys: |
+                        ${{ runner.os }}-pnpm-store-
+
+            -   name: Install dependencies
+                run: |
+                    cd aws
+                    pnpm install
+
+            -   name: Deploy AWS CDK stack
+                run: |
+                    cd aws
+                    npm run deploy
+                env:
+                    AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                    AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                    AWS_REGION: sa-east-1
+    build:
+        needs: cdk
+        runs-on: ubuntu-latest
+        steps:
+            -   name: Checkout repository
+                uses: actions/checkout@v2
+
+            -   name: Login to Amazon ECR
+                id: login-ecr
+                uses: aws-actions/amazon-ecr-login@v1
+                with:
+                    registry: ${{ env.ECR_REGISTRY }}
+                    aws-region: ${{ env.AWS_REGION }}
+
+            -   name: Build Docker image
+                id: build-image
+                run: |
+                    docker build --target production -t $ECR_REGISTRY/$IMAGE_NAME:$GITHUB_SHA .
+
+            -   name: Push Docker image to ECR
+                id: push-image
+                run: |
+                    docker push $ECR_REGISTRY/$IMAGE_NAME:$GITHUB_SHA
+
+            -   name: Write image details to file
+                run: |
+                    echo "::set-output name=image-uri::$ECR_REGISTRY/$IMAGE_NAME:$GITHUB_SHA"
     deploy:
+        needs: build
         runs-on: ubuntu-latest
         steps:
             -   name: Checkout repository

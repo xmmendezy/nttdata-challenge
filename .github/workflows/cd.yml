@@ -129,6 +129,12 @@ jobs:
                 run: |
                     docker push $ECR_REGISTRY/$IMAGE_NAME:$GITHUB_SHA
 
+            -   name: Push Docker image to ECR
+                id: push-image-latest
+                if: github.ref == 'refs/heads/master'
+                run: |
+                    docker push $ECR_REGISTRY/$IMAGE_NAME:latest
+
             -   name: Write image details to file
                 run: |
                     echo "::set-output name=image-uri::$ECR_REGISTRY/$IMAGE_NAME:$GITHUB_SHA"
@@ -157,8 +163,8 @@ jobs:
                     chmod +x kubectl
                     sudo mv kubectl /usr/local/bin/
                     aws eks update-kubeconfig --name ${{ env.AWS_CLUSTER_KUBERNETES }} --region ${{ env.AWS_REGION }} --role-arn ${{ env.AWS_ARN_KUBERNETES }}
+            -   name: Remove pods
+                run: kubectl delete --all pods
             -   name: Deploy
                 run: kubectl apply -f kubernetes
-                env:
-                    DOCKER_REPO_NAME: ${{ format('{0}/{1}', secrets.ECR_REGISTRY, secrets.IMAGE_NAME) }}:$GITHUB_SHA
 

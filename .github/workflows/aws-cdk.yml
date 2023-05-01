@@ -9,18 +9,15 @@ jobs:
     deploy:
         runs-on: ubuntu-latest
         steps:
-            - name: Checkout code
-              uses: actions/checkout@v2
-            - name: Install AWS CLI and AWS CDK
+            - name: Prepare
               uses: aws-actions/setup-aws-cli@v1
               with:
-                  aws-region: <AWS region>
-                  cdk-version: <CDK version>
-            - name: Authenticate with Amazon ECR
-              id: login-ecr
-              uses: aws-actions/amazon-ecr-login@v1
-              with:
-                  registry: <ECR registry>
+                  node-version: 18
+                  cache: 'npm'
+            - name: Install dependencies
+              run: |
+                  cd aws
+                  npm ci
             - name: Deploy AWS CDK stack
               run: |
                   cd aws

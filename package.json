@@ -6,7 +6,6 @@
 	"private": true,
 	"license": "UNLICENSED",
 	"scripts": {
-		"postinstall": "cd aws && pnpm i",
 		"dev": "docker compose --project-name ntt_data up",
 		"deploy:cdk": "cd aws && npm run deploy",
 		"build": "nest build",

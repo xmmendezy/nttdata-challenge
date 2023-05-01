@@ -29,13 +29,13 @@ jobs:
             - name: Build Docker image
               id: build-image
               run: |
-                  docker build --target production -t $ECR_REGISTRY/$IMAGE_NAME:${{ github.ref }} .
+                  docker build --target production -t $ECR_REGISTRY/$IMAGE_NAME:$GITHUB_SHA .
 
             - name: Push Docker image to ECR
               id: push-image
               run: |
-                  docker push $ECR_REGISTRY/$IMAGE_NAME:${{ github.ref }}
+                  docker push $ECR_REGISTRY/$IMAGE_NAME:$GITHUB_SHA
 
             - name: Write image details to file
               run: |
-                  echo "::set-output name=image-uri::$ECR_REGISTRY/$IMAGE_NAME:${{ github.ref }}"
+                  echo "::set-output name=image-uri::$ECR_REGISTRY/$IMAGE_NAME:$GITHUB_SHA"

@@ -15,13 +15,21 @@ spec:
                 app: nttdata-app
         spec:
             containers:
-                - name: nttdata-app
-                  image:  092746443745.dkr.ecr.sa-east-1.amazonaws.com/nttdata-repository:latest
-                  ports:
-                      - containerPort: 3000
-                  envFrom:
-                      - secretRef:
-                          name: nttdata-app-secret
+                -   name: nttdata-app
+                    image: 092746443745.dkr.ecr.sa-east-1.amazonaws.com/nttdata-repository:latest
+                    ports:
+                        -   containerPort: 3000
+                    volumeMounts:
+                        -   name: data
+                            mountPath: /data
+                            readOnly: false
+                    envFrom:
+                        -   secretRef:
+                                name: nttdata-app-secret
+            volumes:
+                -   name: data
+                    persistentVolumeClaim:
+                        claimName: redis-data
 ---
 apiVersion: v1
 kind: Service
@@ -32,8 +40,8 @@ metadata:
 spec:
     type: LoadBalancer
     ports:
-        - port: 80
-          targetPort: 3000
-          protocol: TCP
+        -   port: 80
+            targetPort: 3000
+            protocol: TCP
     selector:
         app: nttdata-app

@@ -163,8 +163,8 @@ jobs:
                     chmod +x kubectl
                     sudo mv kubectl /usr/local/bin/
                     aws eks update-kubeconfig --name ${{ env.AWS_CLUSTER_KUBERNETES }} --region ${{ env.AWS_REGION }} --role-arn ${{ env.AWS_ARN_KUBERNETES }}
-            -   name: Remove pods
-                run: kubectl delete --all pods
             -   name: Deploy
                 run: kubectl apply -f kubernetes
+            -   name: Force update pods
+                run: kubectl delete --all pods
 

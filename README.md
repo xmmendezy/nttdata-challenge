@@ -5,7 +5,7 @@
 ```shell
 curl -X POST \
 -H "Content-Type: application/json" \
--d '{ "username" : "nttdata", "password" : "Hola1234" }' \
+-d '{ "username" : "nttdata", "password" : "${password}" }' \
 http://ab7013c0ace054debb449e3e37f38deb-795086994.sa-east-1.elb.amazonaws.com/auth
 ```
 
